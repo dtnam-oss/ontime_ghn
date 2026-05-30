@@ -1,11 +1,10 @@
-// Test buildAggregates trên CSV nguồn thật (không cần credential).
-//   cd sync && npm test
+// Test buildAggregates (agg_trip) trên CSV nguồn thật. cd sync && npm test
 import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { parseCsv } from './parse-csv.js';
-import { groupTrips, buildAggregates } from '../src/metrics.js';
+import { groupTrips, buildAggregates, buildStops } from '../src/metrics.js';
 import { COL } from '../src/constants.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -16,59 +15,61 @@ const check = (name, fn) => { fn(); console.log(`  ✓ ${name}`); pass++; };
 
 const all = parseCsv(readFileSync(CSV, 'utf8'));
 const header = all[0];
-const rows = all.slice(1).filter((r) => r[COL.TRIP]); // bỏ dòng rỗng cuối
-console.log(`CSV: ${header.length} cột, ${rows.length} dòng stop-level`);
-
+const rows = all.slice(1).filter((r) => r[COL.TRIP]);
 const trips = groupTrips(rows);
-const aggs = buildAggregates(rows, { topN: 10 });
+const aggs = buildAggregates(rows);
+const trip = aggs.agg_trip;
+const H = trip[0];
 
-check('header đúng 20 cột', () => assert.strictEqual(header.length, 20));
-check('có chuyến', () => assert.ok(trips.length > 0));
+console.log(`CSV: ${header.length} cột, ${rows.length} dòng | trips=${trips.length}`);
 
-check('ontime/chuyến = đúng giờ / đã-check-in', () => {
-  for (const t of trips.slice(0, 200)) {
-    if (t.ontime == null) { assert.strictEqual(t.checkedIn, 0); continue; }
-    assert.ok(t.ontime >= 0 && t.ontime <= 1, `ontime ngoài [0,1]: ${t.ontime}`);
-    assert.strictEqual(t.ontime, t.ontimeCount / t.checkedIn);
+check('source header 20 cột', () => assert.strictEqual(header.length, 20));
+check('chỉ xuất agg_trip', () => assert.deepStrictEqual(Object.keys(aggs), ['agg_trip']));
+check('agg_trip header có 11 cột (+Đúng giờ,Trễ)', () => {
+  assert.strictEqual(H.length, 11);
+  assert.ok(H.includes('Đúng giờ') && H.includes('Trễ') && H.includes('Ontime%'));
+});
+check('số dòng = số chuyến', () => assert.strictEqual(trip.length - 1, trips.length));
+
+const iOn = H.indexOf('Đúng giờ'), iLate = H.indexOf('Trễ');
+const iChk = H.indexOf('Đã check-in'), iStops = H.indexOf('Điểm dừng'), iPct = H.indexOf('Ontime%');
+
+check('đúng giờ + trễ ≤ đã check-in ≤ điểm dừng', () => {
+  for (const r of trip.slice(1)) {
+    assert.ok(r[iOn] + r[iLate] <= r[iChk], `${r[0]}: ${r[iOn]}+${r[iLate]}>${r[iChk]}`);
+    assert.ok(r[iChk] <= r[iStops]);
+  }
+});
+check('Ontime% = đúng giờ / đã-check-in (khi có check-in)', () => {
+  for (const r of trip.slice(1, 300)) {
+    if (r[iChk] === 0) { assert.strictEqual(r[iPct], ''); continue; }
+    assert.strictEqual(r[iPct], Math.round((r[iOn] / r[iChk]) * 10000) / 100);
   }
 });
 
-check('agg_trip: Ontime% trong [0,100]', () => {
-  for (const r of aggs.agg_trip.slice(1)) {
-    if (r[8] === '') continue;
-    assert.ok(r[8] >= 0 && r[8] <= 100, `pct=${r[8]}`);
+// --- agg_stops ---
+const stops = buildStops(rows);
+const SH = stops[0];
+const sIdx = (k) => SH.indexOf(k);
+check('agg_stops: 14 cột + đủ dòng điểm', () => {
+  assert.strictEqual(SH.length, 14);
+  assert.ok(SH.includes('Tên điểm') && SH.includes('Đóng seal') && SH.includes('Check-out thực tế') && SH.includes('Trễ (phút)'));
+  assert.strictEqual(stops.length - 1, rows.length); // 1 dòng/điểm
+});
+check('agg_stops: delay ≥ 0 hoặc rỗng; chưa check-in -> rỗng', () => {
+  const iAct = sIdx('Check-in thực tế'), iDelay = sIdx('Trễ (phút)');
+  for (const r of stops.slice(1)) {
+    if (!r[iAct]) { assert.strictEqual(r[iDelay], ''); continue; }
+    assert.ok(typeof r[iDelay] === 'number' && r[iDelay] >= 0, `delay=${r[iDelay]}`);
   }
 });
 
-check('agg_daily sắp xếp tăng theo ngày + có trend', () => {
-  const d = aggs.agg_daily.slice(1).map((r) => r[0]);
-  assert.deepStrictEqual(d, [...d].sort());
-  assert.ok(aggs.agg_daily[0].includes('Trend'));
+check('agg_stops since: lọc cửa sổ ngày', () => {
+  const dates = [...new Set(rows.map((r) => r[COL.DATE].slice(0, 10)))].sort();
+  const since = dates[dates.length - 1]; // chỉ ngày mới nhất
+  const win = buildStops(rows, { since });
+  assert.ok(win.length - 1 < stops.length - 1); // ít hơn full
+  for (const r of win.slice(1)) assert.ok(r[1] >= since); // cột Ngày ≥ since
 });
 
-check('agg_type có ≥1 loại', () => assert.ok(aggs.agg_type.length > 1));
-
-check('agg_top: tối đa 30 dòng (10×3) + sắp xếp tăng trong nhóm', () => {
-  const body = aggs.agg_top.slice(1);
-  assert.ok(body.length <= 30);
-  for (const cat of ['Tuyến', 'Tài xế', 'BKS']) {
-    const v = body.filter((r) => r[0] === cat).map((r) => r[3]);
-    assert.deepStrictEqual(v, [...v].sort((a, b) => a - b));
-  }
-});
-
-check('agg_heatmap: hàng đầu = Mã lộ trình + danh sách ngày', () =>
-  assert.strictEqual(aggs.agg_heatmap[0][0], 'Mã lộ trình'));
-
-check('agg_vehicle_checkin: đủ 5 cột', () =>
-  assert.strictEqual(aggs.agg_vehicle_checkin[0].length, 5));
-
-// In mẫu để mắt thường kiểm chứng
-console.log('\n--- agg_type ---');
-aggs.agg_type.forEach((r) => console.log('  ', r.join(' | ')));
-console.log('--- agg_daily (5 dòng) ---');
-aggs.agg_daily.slice(0, 6).forEach((r) => console.log('  ', r.join(' | ')));
-console.log('--- agg_top Tuyến (top 5 thấp nhất) ---');
-aggs.agg_top.slice(1).filter((r) => r[0] === 'Tuyến').slice(0, 5).forEach((r) => console.log('  ', r.join(' | ')));
-
-console.log(`\n✅ ${pass} checks pass | trips=${trips.length} | agg_trip rows=${aggs.agg_trip.length - 1}`);
+console.log(`\n✅ ${pass} checks pass | agg_trip=${trip.length - 1} (${H.length} cột) | agg_stops=${stops.length - 1}`);

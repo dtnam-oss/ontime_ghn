@@ -5,7 +5,8 @@ export const SOURCE_TAB = 'Chi tiết';
 export const COL = {
   STT: 0, DATE: 1, TRIP: 2, TRIP_STATUS: 3, BKS: 4, LOAD: 5, DRIVER: 6,
   ROUTE: 7, TYPE: 8, STOPS: 9, CHECKED: 10, LATE: 11, ONTIME: 12,
-  STOP_NAME: 13, CHECKIN_STATUS: 19,
+  STOP_NAME: 13, CHECKIN_PLAN: 14, CHECKIN_ACTUAL: 15,
+  CHECKOUT_PLAN: 16, CHECKOUT_ACTUAL: 17, SEAL: 18, CHECKIN_STATUS: 19,
 };
 
 export const TYPES = ['Nội thành', 'Nội tỉnh/Nội vùng', 'Tuyến trục'];
@@ -21,7 +22,5 @@ export const parseDate = (s) => {
 };
 
 export const TABS = {
-  TRIP: 'agg_trip', DAILY: 'agg_daily', TYPE: 'agg_type',
-  HEATMAP: 'agg_heatmap', TOP: 'agg_top', VEHICLE: 'agg_vehicle_checkin',
-  META: '_meta',
+  TRIP: 'agg_trip', STOPS: 'agg_stops', META: '_meta', RAW: 'raw',
 };

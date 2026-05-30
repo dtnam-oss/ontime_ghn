@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { parseCsv } from '../test/parse-csv.js';
-import { buildAggregates } from '../src/metrics.js';
+import { buildAggregates, buildStops } from '../src/metrics.js';
 import { COL } from '../src/constants.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -12,7 +12,8 @@ const csv = join(here, '../../VẬN TẢI NAK VIỆT NAM - Chi tiết.csv');
 const out = join(here, '../../web/src/fixtures/sample.json');
 
 const rows = parseCsv(readFileSync(csv, 'utf8')).slice(1).filter((r) => r[COL.TRIP]);
-const aggs = buildAggregates(rows, { topN: 10 });
+const aggs = buildAggregates(rows);
+aggs.agg_stops = buildStops(rows);
 
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, JSON.stringify(aggs));
