@@ -58,9 +58,19 @@ cp .env.example .env      # điền VITE_SHEETS_API_KEY
 npm install && npm run dev   # mở app, bấm "Test kết nối"
 ```
 
-### 6. GitHub Secrets (cho Phase 1/3)
+### 6. Sheet lịch sử (RAW) — bắt buộc cho tích lũy toàn bộ ngày
+Source chỉ giữ 7 ngày gần nhất → cần sheet riêng tích lũy lịch sử:
+1. Tạo **1 Google Spreadsheet MỚI** (để private — KHÔNG publish).
+2. Share **Editor** cho email service account.
+3. Lấy id → đặt secret `RAW_SHEET_ID`.
+- Sync tự tạo tab `raw`, merge window-replace (source = chân lý 7 ngày), cap `RETENTION_DAYS`.
+- `agg_trip` (toàn bộ) + `agg_stops` (cửa sổ `STOPS_WINDOW_DAYS`, mặc định 90) ghi vào backend public.
+- ⚠️ Giữ `raw` ở sheet PRIVATE (chứa PII đầy đủ); chỉ backend (agg_*) mới publish.
+
+### 7. GitHub Secrets
 Repo → Settings → Secrets and variables → Actions:
-`GOOGLE_SA_JSON`, `SOURCE_SHEET_ID`, `BACKEND_SHEET_ID`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
+`GOOGLE_SA_JSON`, `SOURCE_SHEET_ID`, `BACKEND_SHEET_ID`, `RAW_SHEET_ID`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
+(Tùy chọn env trong workflow: `RETENTION_DAYS`=540, `STOPS_WINDOW_DAYS`=90.)
 
 > ⚠️ KHÔNG commit file JSON service account / `.env` (đã có trong `.gitignore`).
 

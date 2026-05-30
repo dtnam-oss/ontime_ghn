@@ -39,8 +39,19 @@ SOURCE SHEET (1a4ECGE9) ──Sheets API(service account)──► Node sync (Gi
 |---|-------|--------|------|
 | 0 | Setup repo + service account + GitHub Secrets + publish sheet | code done · manual pending | [phase-00-setup.md](./phase-00-setup.md) |
 | 1 | Node sync + metrics → ghi backend sheet + GH Actions cron | code done · e2e pending creds | [phase-01-etl-metrics.md](./phase-01-etl-metrics.md) |
-| 2 | FE React/Vite đọc sheet trực tiếp, 6 section, deploy tĩnh | code done · deploy pending | [phase-02-dashboard.md](./phase-02-dashboard.md) |
+| 2 | FE React/Vite (6 tab) — **thay bởi P5 redesign** | superseded by P5 | [phase-02-dashboard.md](./phase-02-dashboard.md) |
 | 3 | Telegram (today/week) trong sync job + manual dispatch | code done · send pending creds | [phase-03-telegram.md](./phase-03-telegram.md) |
+| 4 | Sync: agg_trip +2 cột count, bỏ 5 bảng agg thừa | code done (test 6/6) | [phase-04-sync-agg-trip-columns.md](./phase-04-sync-agg-trip-columns.md) |
+| 5 | FE redesign: 1 trang cuộn + bộ lọc toàn cục (5 chiều) | code done · visual verified | [phase-05-frontend-redesign-filters.md](./phase-05-frontend-redesign-filters.md) |
+| 6 | Sync: thêm bảng agg_stops (per-điểm + độ trễ) | code done (test 8/8) | [phase-06-sync-agg-stops.md](./phase-06-sync-agg-stops.md) |
+| 7 | FE: chi tiết hành trình (drill + timeline + bar trễ) | code done · visual verified | [phase-07-frontend-trip-detail.md](./phase-07-frontend-trip-detail.md) |
+| 8 | Tinh chỉnh chi tiết: bảng 5 mốc giờ + heatmap row-click + reorder | code done · visual verified | [phase-08-trip-detail-enhancements.md](./phase-08-trip-detail-enhancements.md) |
+| 9 | TripDetail: fix tràn (gọn list, bỏ bar) + highlight CI/CO thực tế trễ | code done · visual verified | [phase-09-trip-detail-fit-highlight.md](./phase-09-trip-detail-fit-highlight.md) |
+| 10 | Tích lũy lịch sử: raw private + window-replace + retention | code done · e2e pending RAW sheet | [phase-10-history-accumulation.md](./phase-10-history-accumulation.md) |
+
+> **Feature 2026-05-30:** drill-down chi tiết chuyến. Xem [brainstorm-trip-detail.md](./brainstorm-trip-detail.md). Thứ tự: P6 (sync agg_stops) → P7 (FE TripDetail).
+
+> **Redesign 2026-05-30:** bỏ layout 6 tab → 1 trang cuộn + filter toàn cục. FE chỉ đọc `agg_trip`. Xem [brainstorm-redesign-layout.md](./brainstorm-redesign-layout.md). Thứ tự: P4 (sync) → P5 (FE).
 
 ## Cấu trúc repo (monorepo)
 ```
