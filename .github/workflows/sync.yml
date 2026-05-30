@@ -1,0 +1,35 @@
+name: Ontime Sync
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 07:00 giờ VN (UTC+7) hằng ngày
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: 'Phạm vi báo cáo Telegram (Phase 3)'
+        type: choice
+        options: [today, week]
+        default: today
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sync
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: sync/package-lock.json
+      - run: npm ci
+      - run: npm run sync
+        env:
+          GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
+          SOURCE_SHEET_ID: ${{ secrets.SOURCE_SHEET_ID }}
+          BACKEND_SHEET_ID: ${{ secrets.BACKEND_SHEET_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          REPORT_SCOPE: ${{ github.event.inputs.scope || 'today' }}
