@@ -1,0 +1,16 @@
+{
+  "name": "ontime-sync",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "NAK Ontime — sync job: source sheet -> aggregates -> backend sheet + Telegram",
+  "scripts": {
+    "verify": "node scripts/verify-setup.js",
+    "sync": "node src/index.js",
+    "test": "node test/metrics.test.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "googleapis": "^144.0.0"
+  }
+}
