@@ -14,6 +14,8 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Ho_Chi_Minh   # "today" theo giờ VN
     defaults:
       run:
         working-directory: sync
@@ -30,6 +32,9 @@ jobs:
           GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
           SOURCE_SHEET_ID: ${{ secrets.SOURCE_SHEET_ID }}
           BACKEND_SHEET_ID: ${{ secrets.BACKEND_SHEET_ID }}
+          RAW_SHEET_ID: ${{ secrets.RAW_SHEET_ID }}
+          RETENTION_DAYS: '540'
+          STOPS_WINDOW_DAYS: '90'
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           REPORT_SCOPE: ${{ github.event.inputs.scope || 'today' }}
