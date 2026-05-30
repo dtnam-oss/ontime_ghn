@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+
+# Service account / secrets — NEVER commit
+*sa*.json
+service-account*.json
+*credentials*.json
+*.key
+*.pem
+
+.DS_Store
+*.log
