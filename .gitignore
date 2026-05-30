@@ -6,7 +6,6 @@ build/
 .env.*.local
 
 # Service account / secrets — NEVER commit
-*sa*.json
 service-account*.json
 *credentials*.json
 nakvn-*.json
@@ -14,6 +13,9 @@ nakvn-*.json
 !/vercel.json    # ngoại lệ: vercel.json là config (không phải secret) -> vẫn track
 *.key
 *.pem
+
+# Fixture dev-only (chứa PII) — chỉ dùng local cho test, KHÔNG commit/deploy
+web/src/fixtures/
 
 .DS_Store
 *.log

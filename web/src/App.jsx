@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import './styles.css';
-import { loadTrips, loadStops, USE_MOCK } from './lib/data.js';
+import { loadTrips, loadStops } from './lib/data.js';
 import * as T from './lib/transform.js';
 import { useFilters } from './hooks/useFilters.js';
 import FilterBar from './components/FilterBar.jsx';
@@ -46,7 +46,6 @@ export default function App() {
     <main className="app">
       <header className="topbar">
         <h1>📊 NAK — Báo cáo Ontime giao hàng</h1>
-        {USE_MOCK && <span className="badge">Dữ liệu mẫu (CSV) — chưa kết nối sheet</span>}
       </header>
       <FilterBar options={opts} values={values} set={set} reset={reset} matchCount={ft.length} />
       {ft.length === 0 ? (
