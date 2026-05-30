@@ -4,8 +4,13 @@ import { fetchTab } from './sheets.js';
 
 export const USE_MOCK = !import.meta.env.VITE_SHEETS_API_KEY;
 
+// Fixture CHỈ nạp ở DEV → build production loại sample.json (không lộ PII qua URL tĩnh).
 let _fixture;
-const fixture = async () => (_fixture ||= (await import('../fixtures/sample.json')).default);
+async function fixture() {
+  if (!import.meta.env.DEV) return { agg_trip: [], agg_stops: [] };
+  _fixture ||= (await import('../fixtures/sample.json')).default;
+  return _fixture;
+}
 
 export async function loadTrips() {
   return USE_MOCK ? (await fixture()).agg_trip : fetchTab('agg_trip');
