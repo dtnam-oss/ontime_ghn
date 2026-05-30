@@ -1,12 +1,19 @@
-// Nạp dữ liệu: có API key -> đọc backend sheet; không có -> dùng fixture thật (dev/preview).
+// Nạp dữ liệu. Có API key -> đọc backend sheet; không -> fixture thật (import động
+// để fixture lớn không vào main bundle). agg_stops tải lazy (chỉ khi drill chi tiết).
 import { fetchTab } from './sheets.js';
-import sample from '../fixtures/sample.json';
 
-const TABS = ['agg_trip', 'agg_daily', 'agg_type', 'agg_heatmap', 'agg_top', 'agg_vehicle_checkin'];
 export const USE_MOCK = !import.meta.env.VITE_SHEETS_API_KEY;
 
-export async function loadData() {
-  if (USE_MOCK) return sample;
-  const arrs = await Promise.all(TABS.map((t) => fetchTab(t)));
-  return Object.fromEntries(TABS.map((t, i) => [t, arrs[i]]));
+let _fixture;
+const fixture = async () => (_fixture ||= (await import('../fixtures/sample.json')).default);
+
+export async function loadTrips() {
+  return USE_MOCK ? (await fixture()).agg_trip : fetchTab('agg_trip');
+}
+
+let _stops;
+export async function loadStops() {
+  if (_stops) return _stops;
+  _stops = USE_MOCK ? (await fixture()).agg_stops : await fetchTab('agg_stops');
+  return _stops;
 }

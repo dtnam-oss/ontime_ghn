@@ -1,7 +1,7 @@
 import { ontimeColor } from '../lib/colors.js';
 
 // Section 4: heatmap lưới Mã lộ trình × Ngày, ô tô màu theo ontime%.
-export default function Heatmap({ heatmap }) {
+export default function Heatmap({ heatmap, onDrill }) {
   const { dates, rows } = heatmap;
   return (
     <div>
@@ -17,9 +17,12 @@ export default function Heatmap({ heatmap }) {
           <tbody>
             {rows.map((r) => (
               <tr key={r.route}>
-                <td className="sticky-col">{r.route}</td>
+                <td className="sticky-col" style={{ cursor: 'pointer' }} title="Click xem cả tuyến"
+                  onClick={() => onDrill && onDrill({ kind: 'route', value: r.route })}>{r.route}</td>
                 {r.cells.map((c, i) => (
-                  <td key={i} style={{ background: ontimeColor(c.val) }} title={c.val == null ? '—' : `${c.val}%`}>
+                  <td key={i} style={{ background: ontimeColor(c.val), cursor: c.val == null ? 'default' : 'pointer' }}
+                    title={c.val == null ? '—' : `${c.val}% — click xem chi tiết`}
+                    onClick={() => c.val != null && onDrill && onDrill({ kind: 'route', value: r.route, date: c.date })}>
                     {c.val == null ? '' : Math.round(c.val)}
                   </td>
                 ))}

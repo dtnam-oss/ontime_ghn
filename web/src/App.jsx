@@ -1,57 +1,68 @@
 import { useEffect, useMemo, useState } from 'react';
 import './styles.css';
-import { loadData, USE_MOCK } from './lib/data.js';
+import { loadTrips, loadStops, USE_MOCK } from './lib/data.js';
 import * as T from './lib/transform.js';
+import { useFilters } from './hooks/useFilters.js';
+import FilterBar from './components/FilterBar.jsx';
 import KpiCards from './components/KpiCards.jsx';
 import TrendChart from './components/TrendChart.jsx';
 import TypeBar from './components/TypeBar.jsx';
+import CheckinDonut from './components/CheckinDonut.jsx';
 import Heatmap from './components/Heatmap.jsx';
 import TopTables from './components/TopTables.jsx';
 import VehicleCheckin from './components/VehicleCheckin.jsx';
+import TripDetail from './components/TripDetail.jsx';
 
-const TABS = [
-  { key: 'tong-quan', label: 'Tổng quan' },
-  { key: 'xu-huong', label: 'Xu hướng' },
-  { key: 'loai', label: 'Theo Loại' },
-  { key: 'heatmap', label: 'Heatmap' },
-  { key: 'top', label: 'Top thấp nhất' },
-  { key: 'xe', label: 'Theo xe' },
-];
-
+// 1 trang cuộn liền mạch + bộ lọc toàn cục. FE đọc agg_trip, tự gom + lọc.
 export default function App() {
-  const [data, setData] = useState(null);
+  const [trips, setTrips] = useState(null);
   const [error, setError] = useState(null);
-  const [tab, setTab] = useState('tong-quan');
+  const { values, set, reset } = useFilters();
+  const [drill, setDrill] = useState(null);
+  const [selTrip, setSelTrip] = useState(null);
+  const [stops, setStops] = useState(null);
 
-  useEffect(() => { loadData().then(setData).catch((e) => setError(e.message)); }, []);
+  useEffect(() => { loadTrips().then((v) => setTrips(T.parseTrips(v))).catch((e) => setError(e.message)); }, []);
 
-  const view = useMemo(() => data && ({
-    kpi: T.kpi(data), daily: T.daily(data), byType: T.typeBar(data),
-    heatmap: T.heatmap(data), top: T.top(data), dates: T.allDates(data),
-  }), [data]);
+  const opts = useMemo(() => trips && T.options(trips), [trips]);
+  const ft = useMemo(() => (trips ? T.filterTrips(trips, values) : []), [trips, values]);
+  const view = useMemo(() => (trips ? {
+    kpi: T.kpi(ft), daily: T.daily(ft), byType: T.typeBar(ft), checkin: T.checkin(ft),
+    heatmap: T.heatmap(ft), top: T.top(ft), vehicle: T.vehicle(ft),
+  } : null), [ft, trips]);
+
+  const matchedTrips = useMemo(() => T.tripsForDrill(ft, drill), [ft, drill]);
+  const selected = matchedTrips.find((t) => t.trip === selTrip) || matchedTrips[0] || null;
+
+  const onDrill = (d) => {
+    if (!stops) loadStops().then((v) => setStops(T.parseStops(v))).catch(() => {});
+    setDrill(d); setSelTrip(null);
+  };
 
   if (error) return <main className="app"><h1>📊 Báo cáo Ontime</h1><p className="err">❌ {error}</p></main>;
   if (!view) return <main className="app"><h1>📊 Báo cáo Ontime</h1><p>Đang tải dữ liệu…</p></main>;
 
   return (
     <main className="app">
-      <header>
+      <header className="topbar">
         <h1>📊 NAK — Báo cáo Ontime giao hàng</h1>
         {USE_MOCK && <span className="badge">Dữ liệu mẫu (CSV) — chưa kết nối sheet</span>}
       </header>
-      <nav className="tabs">
-        {TABS.map((t) => (
-          <button key={t.key} className={tab === t.key ? 'active' : ''} onClick={() => setTab(t.key)}>{t.label}</button>
-        ))}
-      </nav>
-      <section className="panel">
-        {tab === 'tong-quan' && <KpiCards kpi={view.kpi} />}
-        {tab === 'xu-huong' && <TrendChart daily={view.daily} />}
-        {tab === 'loai' && <TypeBar byType={view.byType} />}
-        {tab === 'heatmap' && <Heatmap heatmap={view.heatmap} />}
-        {tab === 'top' && <TopTables top={view.top} />}
-        {tab === 'xe' && <VehicleCheckin data={data} dates={view.dates} />}
-      </section>
+      <FilterBar options={opts} values={values} set={set} reset={reset} matchCount={ft.length} />
+      {ft.length === 0 ? (
+        <p className="empty">Không có dữ liệu khớp bộ lọc.</p>
+      ) : (
+        <section className="grid">
+          <div className="full"><KpiCards kpi={view.kpi} /></div>
+          <div className="card full"><TrendChart daily={view.daily} /></div>
+          <div className="card half"><TypeBar byType={view.byType} /></div>
+          <div className="card half"><CheckinDonut data={view.checkin} /></div>
+          <div className="card full"><Heatmap heatmap={view.heatmap} onDrill={onDrill} /></div>
+          <div className="card full"><TopTables top={view.top} onDrill={onDrill} /></div>
+          <div className="card full"><TripDetail drill={drill} matchedTrips={matchedTrips} selected={selected} onSelect={(t) => setSelTrip(t.trip)} allStops={stops || []} /></div>
+          <div className="card full"><VehicleCheckin rows={view.vehicle} /></div>
+        </section>
+      )}
     </main>
   );
 }
