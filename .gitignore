@@ -9,6 +9,9 @@ build/
 *sa*.json
 service-account*.json
 *credentials*.json
+nakvn-*.json
+/*.json          # mọi file .json ở thư mục gốc (nơi hay đặt key) — package.json nằm trong sync/ web/ nên an toàn
+!/vercel.json    # ngoại lệ: vercel.json là config (không phải secret) -> vẫn track
 *.key
 *.pem
 
